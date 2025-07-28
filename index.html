@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Anime List App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: #0f172a;
+      color: #f1f5f9;
+      min-height: 100vh;
+      padding-top: 60px;
+      padding-bottom: 70px;
+      overflow-x: hidden;
+    }
+    .loading {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .spinner {
+      border: 8px solid #334155;
+      border-top: 8px solid #3b82f6;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .navbar {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      height: 60px;
+      background: #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem;
+      z-index: 100;
+    }
+    .navbar h1 {
+      color: #38bdf8;
+      font-size: 1.2rem;
+    }
+    .menu-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -260px;
+      width: 250px;
+      height: 100%;
+      background: #1e293b;
+      padding: 2rem 1rem;
+      transition: left 0.3s ease;
+      z-index: 200;
+    }
+    .sidebar.active {
+      left: 0;
+    }
+    .sidebar h2 {
+      color: #38bdf8;
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+    }
+    .sidebar select {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      background: #334155;
+      color: #f1f5f9;
+      border: none;
+    }
+    .overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      z-index: 150;
+    }
+    .overlay.active {
+      display: block;
+    }
+    .main {
+      padding: 2rem 1rem;
+    }
+    .anime-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: #1e293b;
+      border-radius: 1rem;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+    .card:hover {
+      transform: scale(1.03);
+    }
+    .card img {
+      width: 100%;
+      height: 240px;
+      object-fit: cover;
+    }
+    .card-content {
+      padding: 1rem;
+    }
+    .card-content h3 {
+      font-size: 1rem;
+      color: #facc15;
+    }
+    .rating {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #3b82f6;
+      padding: 0.3rem 0.6rem;
+      font-size: 0.75rem;
+      border-radius: 999px;
+      color: white;
+      font-weight: bold;
+    }
+    .popup {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.9);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+    }
+    .popup-box {
+      background: #1e293b;
+      padding: 2rem;
+      border-radius: 1rem;
+      max-width: 400px;
+      width: 90%;
+    }
+    .popup-box h2 {
+      margin-bottom: 1rem;
+      color: #38bdf8;
+      font-size: 1.1rem;
+    }
+    .popup-box input, .popup-box textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      border: none;
+      margin-bottom: 1rem;
+      background: #334155;
+      color: #f1f5f9;
+    }
+    .popup-box button {
+      background: #3b82f6;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+    }
+    .popup-box button:hover {
+      background: #2563eb;
+    }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background: #1e293b;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      height: 60px;
+      z-index: 100;
+      border-top: 1px solid #334155;
+    }
+    .bottom-nav button {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.3rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.3rem 0;
+      transition: all 0.3s;
+      position: relative;
+    }
+    .bottom-nav button.active {
+      color: #3b82f6;
+    }
+    .bottom-nav button.active::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 4px;
+      background: #3b82f6;
+      border-radius: 2px;
+    }
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1rem;
+    }
+    .history-item {
+      background: #1e293b;
+      border-radius: 1rem;
+      padding: 1rem;
+      border-left: 4px solid #3b82f6;
+    }
+    .history-item p {
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="loading"><div class="spinner"></div></div>
+
+  <div class="navbar">
+    <h1>Anime List</h1>
+    <button class="menu-btn" id="menuToggle"><i class="fas fa-bars"></i></button>
+  </div>
+
+  <div class="sidebar" id="sidebar">
+    <h2>Filter Genre</h2>
+    <select>
+      <option>Semua Genre</option>
+      <option>Action</option>
+      <option>Adventure</option>
+      <option>Romance</option>
+      <option>Fantasy</option>
+    </select>
+  </div>
+  <div class="overlay" id="overlay"></div>
+
+  <div class="main">
+    <div id="homeSection">
+      <div class="anime-list" id="animeList"></div>
+    </div>
+    <div id="historySection" class="hidden">
+      <h2 style="margin-bottom:1rem; color:#38bdf8;">Riwayat Komentar</h2>
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </div>
+
+  <div class="popup" id="popup">
+    <div class="popup-box">
+      <h2>Komentar untuk <span id="animeName"></span></h2>
+      <input type="text" id="nama" placeholder="Nama Kamu">
+      <textarea id="komentar" rows="4" placeholder="Komentar kamu tentang anime ini..."></textarea>
+      <button id="kirimBtn">Kirim ke WhatsApp</button>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-btn active" data-target="homeSection"><i class="fas fa-home"></i></button>
+    <button class="nav-btn" data-target="historySection"><i class="fas fa-clock"></i></button>
+  </div>
+
+  <script>
+    const animeData = [
+      { name: "Attack on Titan", img: "https://cdn.myanimelist.net/images/anime/10/47347.jpg", rating: "9.1" },
+      { name: "Demon Slayer", img: "https://cdn.myanimelist.net/images/anime/1286/99889.jpg", rating: "8.7" },
+      { name: "Jujutsu Kaisen", img: "https://cdn.myanimelist.net/images/anime/1171/109222.jpg", rating: "8.8" },
+      { name: "One Piece", img: "https://cdn.myanimelist.net/images/anime/6/73245.jpg", rating: "9.0" },
+      { name: "Naruto Shippuden", img: "https://cdn.myanimelist.net/images/anime/5/17407.jpg", rating: "8.6" },
+      { name: "Spy x Family", img: "https://cdn.myanimelist.net/images/anime/1441/122795.jpg", rating: "8.5" }
+    ];
+
+    const animeList = document.getElementById('animeList');
+    const popup = document.getElementById('popup');
+    const animeNameEl = document.getElementById('animeName');
+    const namaInput = document.getElementById('nama');
+    const komentarInput = document.getElementById('komentar');
+    const kirimBtn = document.getElementById('kirimBtn');
+    const historyList = document.getElementById('historyList');
+    let selectedAnime = '';
+
+    animeData.forEach(anime => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="rating">${anime.rating}</div>
+        <img src="${anime.img}" alt="${anime.name}">
+        <div class="card-content">
+          <h3>${anime.name}</h3>
+        </div>
+      `;
+      card.onclick = () => {
+        selectedAnime = anime.name;
+        animeNameEl.textContent = anime.name;
+        popup.style.display = 'flex';
+      };
+      animeList.appendChild(card);
+    });
+
+    kirimBtn.onclick = () => {
+      const nama = namaInput.value.trim();
+      const komentar = komentarInput.value.trim();
+      if (!nama || !komentar) return alert("Isi semua kolom!");
+      const tanggal = new Date().toLocaleString("id-ID", {
+        day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+      const pesan = `*Komentar Anime*\n\n*Nama:* ${nama}\n*Anime:* ${selectedAnime}\n*Tanggal:* ${tanggal}\n\n*Komentar:*\n${komentar}`;
+      const link = `https://wa.me/6285119048200?text=${encodeURIComponent(pesan)}`;
+      window.open(link, '_blank');
+      popup.style.display = 'none';
+      const historyItem = document.createElement('div');
+      historyItem.className = 'history-item';
+      historyItem.innerHTML = `<p><strong>${nama}</strong> berkomentar tentang <strong>${selectedAnime}</strong> pada <em>${tanggal}</em>.<br>${komentar}</p>`;
+      historyList.prepend(historyItem);
+      namaInput.value = '';
+      komentarInput.value = '';
+    };
+
+    window.addEventListener('click', e => {
+      if (e.target === popup) popup.style.display = 'none';
+    });
+
+    const navButtons = document.querySelectorAll('.nav-btn');
+    const sections = ['homeSection', 'historySection'];
+    navButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        navButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        sections.forEach(id => document.getElementById(id).classList.add('hidden'));
+        document.getElementById(btn.dataset.target).classList.remove('hidden');
+      });
+    });
+
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    document.getElementById('menuToggle').onclick = () => {
+      sidebar.classList.add('active');
+      overlay.classList.add('active');
+    };
+    overlay.onclick = () => {
+      sidebar.classList.remove('active');
+      overlay.classList.remove('active');
+    };
+
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    let timeout = 1000;
+    if (connection && connection.downlink) {
+      const speed = connection.downlink;
+      timeout = speed < 1 ? 2500 : speed < 3 ? 1500 : 800;
+    }
+
+    window.onload = () => {
+      setTimeout(() => {
+        document.querySelector('.loading').style.display = 'none';
+      }, timeout);
+    };
+  </script>
+</body>
+</html>
