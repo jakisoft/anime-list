@@ -1,388 +1,737 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Anime List App</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-    body {
-      background: #0f172a;
-      color: #f1f5f9;
-      min-height: 100vh;
-      padding-top: 60px;
-      padding-bottom: 70px;
-      overflow-x: hidden;
-    }
-    .loading {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: #0f172a;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-    }
-    .spinner {
-      border: 8px solid #334155;
-      border-top: 8px solid #3b82f6;
-      border-radius: 50%;
-      width: 60px;
-      height: 60px;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    .navbar {
-      position: fixed;
-      top: 0;
-      width: 100%;
-      height: 60px;
-      background: #1e293b;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 1rem;
-      z-index: 100;
-    }
-    .navbar h1 {
-      color: #38bdf8;
-      font-size: 1.2rem;
-    }
-    .menu-btn {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 1.5rem;
-      cursor: pointer;
-    }
-    .sidebar {
-      position: fixed;
-      top: 0;
-      left: -260px;
-      width: 250px;
-      height: 100%;
-      background: #1e293b;
-      padding: 2rem 1rem;
-      transition: left 0.3s ease;
-      z-index: 200;
-    }
-    .sidebar.active {
-      left: 0;
-    }
-    .sidebar h2 {
-      color: #38bdf8;
-      margin-bottom: 1rem;
-      font-size: 1.2rem;
-    }
-    .sidebar select {
-      width: 100%;
-      padding: 0.75rem;
-      border-radius: 0.5rem;
-      background: #334155;
-      color: #f1f5f9;
-      border: none;
-    }
-    .overlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-      display: none;
-      z-index: 150;
-    }
-    .overlay.active {
-      display: block;
-    }
-    .main {
-      padding: 2rem 1rem;
-    }
-    .anime-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 1.5rem;
-    }
-    .card {
-      background: #1e293b;
-      border-radius: 1rem;
-      overflow: hidden;
-      position: relative;
-      cursor: pointer;
-      transition: transform 0.3s ease;
-    }
-    .card:hover {
-      transform: scale(1.03);
-    }
-    .card img {
-      width: 100%;
-      height: 240px;
-      object-fit: cover;
-    }
-    .card-content {
-      padding: 1rem;
-    }
-    .card-content h3 {
-      font-size: 1rem;
-      color: #facc15;
-    }
-    .rating {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: #3b82f6;
-      padding: 0.3rem 0.6rem;
-      font-size: 0.75rem;
-      border-radius: 999px;
-      color: white;
-      font-weight: bold;
-    }
-    .popup {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(15, 23, 42, 0.9);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 300;
-    }
-    .popup-box {
-      background: #1e293b;
-      padding: 2rem;
-      border-radius: 1rem;
-      max-width: 400px;
-      width: 90%;
-    }
-    .popup-box h2 {
-      margin-bottom: 1rem;
-      color: #38bdf8;
-      font-size: 1.1rem;
-    }
-    .popup-box input, .popup-box textarea {
-      width: 100%;
-      padding: 0.75rem;
-      border-radius: 0.5rem;
-      border: none;
-      margin-bottom: 1rem;
-      background: #334155;
-      color: #f1f5f9;
-    }
-    .popup-box button {
-      background: #3b82f6;
-      border: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.5rem;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      width: 100%;
-    }
-    .popup-box button:hover {
-      background: #2563eb;
-    }
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      background: #1e293b;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      height: 60px;
-      z-index: 100;
-      border-top: 1px solid #334155;
-    }
-    .bottom-nav button {
-      background: none;
-      border: none;
-      color: #94a3b8;
-      font-size: 1.3rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 0.3rem 0;
-      transition: all 0.3s;
-      position: relative;
-    }
-    .bottom-nav button.active {
-      color: #3b82f6;
-    }
-    .bottom-nav button.active::after {
-      content: "";
-      position: absolute;
-      bottom: 0;
-      width: 100%;
-      height: 4px;
-      background: #3b82f6;
-      border-radius: 2px;
-    }
-    .history-list {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      padding: 1rem;
-    }
-    .history-item {
-      background: #1e293b;
-      border-radius: 1rem;
-      padding: 1rem;
-      border-left: 4px solid #3b82f6;
-    }
-    .history-item p {
-      font-size: 0.9rem;
-      line-height: 1.4;
-    }
-    .hidden {
-      display: none;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LitCollection - Toko Aksesoris Premium</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+        .font-heading {
+            font-family: 'Playfair Display', serif;
+        }
+        .font-elegant {
+            font-family: 'Playfair Display', serif;
+            font-weight: 500;
+        }
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+        .nav-link.active {
+            color: #f59e0b;
+            border-bottom: 2px solid #f59e0b;
+        }
+        .product-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .owner-frame {
+            background: linear-gradient(45deg, #f59e0b, #d97706);
+            padding: 8px;
+            border-radius: 50%;
+        }
+        .product-frame {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            padding: 4px;
+            border-radius: 12px;
+        }
+        .hero-bg {
+            background: linear-gradient(135deg, #1f2937 0%, #374151 50%, #4b5563 100%);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-20px) rotate(10deg); }
+            50% { transform: translateY(-10px) rotate(-5deg); }
+            75% { transform: translateY(-25px) rotate(8deg); }
+        }
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+            33% { transform: translateY(-15px) rotate(-8deg) scale(1.1); }
+            66% { transform: translateY(-8px) rotate(12deg) scale(0.9); }
+        }
+        @keyframes floatFast {
+            0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+            50% { transform: translateY(-30px) rotate(15deg) scale(1.2); }
+        }
+        .floating-accessory {
+            position: fixed;
+            font-size: 2.5rem;
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: 10;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .floating-accessory.float-1 { 
+            animation: float 6s ease-in-out infinite;
+            animation-delay: 0s; 
+        }
+        .floating-accessory.float-2 { 
+            animation: floatSlow 8s ease-in-out infinite;
+            animation-delay: 1s; 
+        }
+        .floating-accessory.float-3 { 
+            animation: floatFast 4s ease-in-out infinite;
+            animation-delay: 2s; 
+        }
+        .floating-accessory.float-4 { 
+            animation: float 7s ease-in-out infinite;
+            animation-delay: 0.5s; 
+        }
+        .floating-accessory.float-5 { 
+            animation: floatSlow 5s ease-in-out infinite;
+            animation-delay: 1.5s; 
+        }
+        .floating-accessory.float-6 { 
+            animation: floatFast 6s ease-in-out infinite;
+            animation-delay: 2.5s; 
+        }
+        .floating-accessory.float-7 { 
+            animation: float 9s ease-in-out infinite;
+            animation-delay: 3s; 
+        }
+        .floating-accessory.float-8 { 
+            animation: floatSlow 7s ease-in-out infinite;
+            animation-delay: 3.5s; 
+        }
+    </style>
 </head>
-<body>
-  <div class="loading"><div class="spinner"></div></div>
-
-  <div class="navbar">
-    <h1>Anime List</h1>
-    <button class="menu-btn" id="menuToggle"><i class="fas fa-bars"></i></button>
-  </div>
-
-  <div class="sidebar" id="sidebar">
-    <h2>Filter Genre</h2>
-    <select>
-      <option>Semua Genre</option>
-      <option>Action</option>
-      <option>Adventure</option>
-      <option>Romance</option>
-      <option>Fantasy</option>
-    </select>
-  </div>
-  <div class="overlay" id="overlay"></div>
-
-  <div class="main">
-    <div id="homeSection">
-      <div class="anime-list" id="animeList"></div>
-    </div>
-    <div id="historySection" class="hidden">
-      <h2 style="margin-bottom:1rem; color:#38bdf8;">Riwayat Komentar</h2>
-      <div class="history-list" id="historyList"></div>
-    </div>
-  </div>
-
-  <div class="popup" id="popup">
-    <div class="popup-box">
-      <h2>Komentar untuk <span id="animeName"></span></h2>
-      <input type="text" id="nama" placeholder="Nama Kamu">
-      <textarea id="komentar" rows="4" placeholder="Komentar kamu tentang anime ini..."></textarea>
-      <button id="kirimBtn">Kirim ke WhatsApp</button>
-    </div>
-  </div>
-
-  <div class="bottom-nav">
-    <button class="nav-btn active" data-target="homeSection"><i class="fas fa-home"></i></button>
-    <button class="nav-btn" data-target="historySection"><i class="fas fa-clock"></i></button>
-  </div>
-
-  <script>
-    const animeData = [
-      { name: "Attack on Titan", img: "https://cdn.myanimelist.net/images/anime/10/47347.jpg", rating: "9.1" },
-      { name: "Demon Slayer", img: "https://cdn.myanimelist.net/images/anime/1286/99889.jpg", rating: "8.7" },
-      { name: "Jujutsu Kaisen", img: "https://cdn.myanimelist.net/images/anime/1171/109222.jpg", rating: "8.8" },
-      { name: "One Piece", img: "https://cdn.myanimelist.net/images/anime/6/73245.jpg", rating: "9.0" },
-      { name: "Naruto Shippuden", img: "https://cdn.myanimelist.net/images/anime/5/17407.jpg", rating: "8.6" },
-      { name: "Spy x Family", img: "https://cdn.myanimelist.net/images/anime/1441/122795.jpg", rating: "8.5" }
-    ];
-
-    const animeList = document.getElementById('animeList');
-    const popup = document.getElementById('popup');
-    const animeNameEl = document.getElementById('animeName');
-    const namaInput = document.getElementById('nama');
-    const komentarInput = document.getElementById('komentar');
-    const kirimBtn = document.getElementById('kirimBtn');
-    const historyList = document.getElementById('historyList');
-    let selectedAnime = '';
-
-    animeData.forEach(anime => {
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `
-        <div class="rating">${anime.rating}</div>
-        <img src="${anime.img}" alt="${anime.name}">
-        <div class="card-content">
-          <h3>${anime.name}</h3>
+<body class="bg-gray-50">
+    <nav class="bg-white shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-800 font-heading">LitCollection</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#" class="nav-link px-3 py-2 text-gray-700 hover:text-amber-500 transition-colors" onclick="showPage('home')">Beranda</a>
+                        <a href="#" class="nav-link px-3 py-2 text-gray-700 hover:text-amber-500 transition-colors" onclick="showPage('products')">Produk</a>
+                        <a href="#" class="nav-link px-3 py-2 text-gray-700 hover:text-amber-500 transition-colors" onclick="showPage('order')">Pemesanan</a>
+                        <a href="#" class="nav-link px-3 py-2 text-gray-700 hover:text-amber-500 transition-colors" onclick="showPage('contact')">Kontak</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="text-gray-700 hover:text-amber-500">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
         </div>
-      `;
-      card.onclick = () => {
-        selectedAnime = anime.name;
-        animeNameEl.textContent = anime.name;
-        popup.style.display = 'flex';
-      };
-      animeList.appendChild(card);
-    });
+        <div id="mobile-menu" class="md:hidden hidden bg-white border-t">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <a href="#" class="nav-link block px-3 py-2 text-gray-700" onclick="showPage('home')">Beranda</a>
+                <a href="#" class="nav-link block px-3 py-2 text-gray-700" onclick="showPage('products')">Produk</a>
+                <a href="#" class="nav-link block px-3 py-2 text-gray-700" onclick="showPage('order')">Pemesanan</a>
+                <a href="#" class="nav-link block px-3 py-2 text-gray-700" onclick="showPage('contact')">Kontak</a>
+            </div>
+        </div>
+    </nav>
 
-    kirimBtn.onclick = () => {
-      const nama = namaInput.value.trim();
-      const komentar = komentarInput.value.trim();
-      if (!nama || !komentar) return alert("Isi semua kolom!");
-      const tanggal = new Date().toLocaleString("id-ID", {
-        day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
-      });
-      const pesan = `*Komentar Anime*\n\n*Nama:* ${nama}\n*Anime:* ${selectedAnime}\n*Tanggal:* ${tanggal}\n\n*Komentar:*\n${komentar}`;
-      const link = `https://wa.me/6285119048200?text=${encodeURIComponent(pesan)}`;
-      window.open(link, '_blank');
-      popup.style.display = 'none';
-      const historyItem = document.createElement('div');
-      historyItem.className = 'history-item';
-      historyItem.innerHTML = `<p><strong>${nama}</strong> berkomentar tentang <strong>${selectedAnime}</strong> pada <em>${tanggal}</em>.<br>${komentar}</p>`;
-      historyList.prepend(historyItem);
-      namaInput.value = '';
-      komentarInput.value = '';
-    };
+    <div class="floating-accessory float-1" style="top: 15%; left: 8%;">💍</div>
+    <div class="floating-accessory float-2" style="top: 25%; right: 12%;">📿</div>
+    <div class="floating-accessory float-3" style="top: 45%; left: 3%;">💎</div>
+    <div class="floating-accessory float-4" style="top: 60%; right: 6%;">💍</div>
+    <div class="floating-accessory float-5" style="top: 75%; left: 15%;">📿</div>
+    <div class="floating-accessory float-6" style="top: 35%; right: 20%;">💎</div>
+    <div class="floating-accessory float-7" style="top: 85%; right: 25%;">💍</div>
+    <div class="floating-accessory float-8" style="top: 55%; left: 18%;">📿</div>
 
-    window.addEventListener('click', e => {
-      if (e.target === popup) popup.style.display = 'none';
-    });
+    <div id="home" class="page active">
+        <section class="hero-bg text-white pt-20 pb-16 relative overflow-hidden">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    <div class="fade-in">
+                        <h2 class="text-5xl font-bold mb-6 font-heading">Koleksi Aksesoris Premium</h2>
+                        <p class="text-xl mb-8 text-gray-300">Temukan gelang, cincin, dan kalung eksklusif yang memukau. Setiap piece dirancang khusus untuk melengkapi gaya Anda.</p>
+                        <div class="flex space-x-4">
+                            <button onclick="showPage('products')" class="bg-amber-500 hover:bg-amber-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors">Lihat Koleksi</button>
+                            <button onclick="showPage('contact')" class="border-2 border-white text-white hover:bg-white hover:text-gray-800 px-8 py-3 rounded-lg font-semibold transition-colors">Hubungi Kami</button>
+                        </div>
+                    </div>
+                    <div class="text-center fade-in">
+                        <div class="owner-frame inline-block mb-6">
+                            <div class="w-48 h-48 bg-gray-200 rounded-full flex items-center justify-center">
+                                <img src="lita.jpg" alt="Lita - Founder" class="w-48 h-48 rounded-full object-cover">
+                            </div>
+                        </div>
+                        <div class="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+                            <h3 class="text-2xl font-bold mb-2 font-heading">Lita</h3>
+                            <p class="text-amber-300 font-semibold mb-3">Founder & Designer</p>
+                            <p class="text-gray-300">"Setiap aksesoris yang kami buat adalah karya seni yang menggabungkan keindahan dan kualitas premium untuk melengkapi kepribadian unik Anda."</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-    const navButtons = document.querySelectorAll('.nav-btn');
-    const sections = ['homeSection', 'historySection'];
-    navButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        navButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        sections.forEach(id => document.getElementById(id).classList.add('hidden'));
-        document.getElementById(btn.dataset.target).classList.remove('hidden');
-      });
-    });
+        <section class="py-16 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold text-gray-800 mb-4 font-heading">Mengapa Memilih LitCollection?</h3>
+                    <p class="text-gray-600 max-w-2xl mx-auto">Kami berkomitmen memberikan yang terbaik dengan kualitas premium dan desain eksklusif</p>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="text-center p-6">
+                        <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-2xl">💎</span>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Kualitas Premium</h4>
+                        <p class="text-gray-600">Menggunakan bahan berkualitas tinggi dan finishing yang sempurna</p>
+                    </div>
+                    <div class="text-center p-6">
+                        <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-2xl">✨</span>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Desain Eksklusif</h4>
+                        <p class="text-gray-600">Setiap piece dirancang unik dan tidak akan Anda temukan di tempat lain</p>
+                    </div>
+                    <div class="text-center p-6">
+                        <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-2xl">🚚</span>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Pengiriman Aman</h4>
+                        <p class="text-gray-600">Kemasan premium dan pengiriman yang aman ke seluruh Indonesia</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
 
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('overlay');
-    document.getElementById('menuToggle').onclick = () => {
-      sidebar.classList.add('active');
-      overlay.classList.add('active');
-    };
-    overlay.onclick = () => {
-      sidebar.classList.remove('active');
-      overlay.classList.remove('active');
-    };
+    <div id="products" class="page pt-20">
+        <section class="py-16 bg-gray-50 relative overflow-hidden">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 mb-4 font-heading">Koleksi Produk Kami</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">Jelajahi koleksi aksesoris premium yang dirancang khusus untuk melengkapi gaya hidup modern Anda</p>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8 mb-16">
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden product-card">
+                        <div class="product-frame m-4">
+                            <div class="h-64 bg-gray-200 rounded-lg flex items-center justify-center">
+                                <img src="gelang.jpg" alt="Gelang" class="h-full object-cover rounded-lg">
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-2xl font-bold mb-3 font-heading">Koleksi Gelang</h3>
+                            <p class="text-gray-600 mb-4">Gelang eksklusif dengan berbagai desain dari minimalis hingga statement pieces</p>
+                            <div class="space-y-2 mb-4">
+                                <div class="flex justify-between">
+                                    <span>Gelang Emas Minimalis</span>
+                                    <span class="font-semibold">Rp 850.000</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Gelang Perak Vintage</span>
+                                    <span class="font-semibold">Rp 650.000</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Gelang Charm Premium</span>
+                                    <span class="font-semibold">Rp 1.200.000</span>
+                                </div>
+                            </div>
+                            <button onclick="showPage('order')" class="w-full bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-lg font-semibold transition-colors">Pesan Sekarang</button>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden product-card">
+                        <div class="product-frame m-4">
+                            <div class="h-64 bg-gray-200 rounded-lg flex items-center justify-center">
+                                <img src="cincin.jpg" alt="Cincin" class="h-full object-cover rounded-lg">
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-2xl font-bold mb-3 font-heading">Koleksi Cincin</h3>
+                            <p class="text-gray-600 mb-4">Cincin elegan untuk berbagai momen spesial dalam hidup Anda</p>
+                            <div class="space-y-2 mb-4">
+                                <div class="flex justify-between">
+                                    <span>Cincin Solitaire</span>
+                                    <span class="font-semibold">Rp 2.500.000</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Cincin Couple Set</span>
+                                    <span class="font-semibold">Rp 1.800.000</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Cincin Statement</span>
+                                    <span class="font-semibold">Rp 950.000</span>
+                                </div>
+                            </div>
+                            <button onclick="showPage('order')" class="w-full bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-lg font-semibold transition-colors">Pesan Sekarang</button>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden product-card">
+                        <div class="product-frame m-4">
+                            <div class="h-64 bg-gray-200 rounded-lg flex items-center justify-center">
+                                <img src="kalung.jpg" alt="Kalung" class="h-full object-cover rounded-lg">
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-2xl font-bold mb-3 font-heading">Koleksi Kalung</h3>
+                            <p class="text-gray-600 mb-4">Kalung cantik yang akan menjadi focal point dalam penampilan Anda</p>
+                            <div class="space-y-2 mb-4">
+                                <div class="flex justify-between">
+                                    <span>Kalung Pendant Emas</span>
+                                    <span class="font-semibold">Rp 1.350.000</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Kalung Layered</span>
+                                    <span class="font-semibold">Rp 750.000</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Kalung Choker Premium</span>
+                                    <span class="font-semibold">Rp 680.000</span>
+                                </div>
+                            </div>
+                            <button onclick="showPage('order')" class="w-full bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-lg font-semibold transition-colors">Pesan Sekarang</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-lg p-8">
+                    <h3 class="text-3xl font-bold text-center mb-8 font-heading">Koleksi Spesial</h3>
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div class="text-center p-6 border border-gray-100 rounded-lg hover:shadow-md transition-shadow">
+                            <div class="product-frame inline-block mb-4">
+                                <div class="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center">
+                                    <img src="wedding.jpg" alt="Set Wedding" class="h-full object-cover rounded-lg">
+                                </div>
+                            </div>
+                            <h4 class="text-xl font-bold mb-2 font-heading">Koleksi Wedding</h4>
+                            <p class="text-gray-600 mb-4">Set lengkap untuk hari bahagia Anda dengan desain eksklusif dan kemewahan yang tak terlupakan</p>
+                            <p class="text-2xl font-bold text-amber-600 mb-4">Mulai Rp 3.500.000</p>
+                            <button onclick="showPage('order')" class="w-full bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-lg font-semibold transition-colors">Pesan Sekarang</button>
+                        </div>
+                        <div class="text-center p-6 border border-gray-100 rounded-lg hover:shadow-md transition-shadow">
+                            <div class="product-frame inline-block mb-4">
+                                <div class="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center">
+                                    <img src="costum.jpg" alt="Custom Design" class="h-full object-cover rounded-lg">
+                                </div>
+                            </div>
+                            <h4 class="text-xl font-bold mb-2 font-heading">Custom Design</h4>
+                            <p class="text-gray-600 mb-4">Wujudkan desain impian Anda dengan bantuan designer profesional kami</p>
+                            <p class="text-2xl font-bold text-amber-600 mb-4">Konsultasi Gratis</p>
+                            <div class="space-y-3">
+                                <button onclick="showPage('order')" class="w-full bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-lg font-semibold transition-colors">Pesan Sekarang</button>
+                                <button onclick="showPage('contact')" class="w-full border-2 border-amber-500 text-amber-600 hover:bg-amber-50 py-3 rounded-lg font-semibold transition-colors">Konsultasi Design</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
 
-    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-    let timeout = 1000;
-    if (connection && connection.downlink) {
-      const speed = connection.downlink;
-      timeout = speed < 1 ? 2500 : speed < 3 ? 1500 : 800;
-    }
+    <div id="order" class="page pt-20">
+        <section class="py-16 bg-gray-50 relative overflow-hidden">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 mb-4 font-heading">Form Pemesanan</h2>
+                    <p class="text-gray-600">Lengkapi form di bawah ini untuk memesan produk pilihan Anda</p>
+                </div>
+                <div class="bg-white rounded-lg shadow-lg p-8">
+                    <form id="orderForm" class="space-y-8">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2">Informasi Pribadi</h3>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nama Lengkap *</label>
+                                    <input type="text" name="nama" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nomor WhatsApp *</label>
+                                    <input type="tel" name="whatsapp" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                                </div>
+                            </div>
+                            <div class="mt-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                <input type="email" name="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2">Detail Produk</h3>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Kategori Produk *</label>
+                                    <select name="kategori" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                                        <option value="">Pilih Kategori</option>
+                                        <option value="Gelang">Gelang</option>
+                                        <option value="Cincin">Cincin</option>
+                                        <option value="Kalung">Kalung</option>
+                                        <option value="Set Wedding">Set Wedding</option>
+                                        <option value="Custom Design">Custom Design</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nama Produk *</label>
+                                    <input type="text" name="produk" required placeholder="Contoh: Gelang Emas Minimalis" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                                </div>
+                            </div>
+                            <div class="grid md:grid-cols-2 gap-6 mt-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah *</label>
+                                    <input type="number" name="jumlah" required min="1" value="1" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Ukuran (jika ada)</label>
+                                    <input type="text" name="ukuran" placeholder="Contoh: 17cm, Size 7" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2">Informasi Pengiriman</h3>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Alamat Lengkap *</label>
+                                <textarea name="alamat" required rows="3" placeholder="Masukkan alamat lengkap termasuk kode pos" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"></textarea>
+                            </div>
+                            <div class="mt-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Catatan Khusus</label>
+                                <textarea name="catatan" rows="3" placeholder="Permintaan khusus, preferensi warna, instruksi pengiriman, dll." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"></textarea>
+                            </div>
+                        </div>
+                        <div class="bg-amber-50 border border-amber-200 rounded-lg p-6">
+                            <h4 class="font-semibold text-amber-800 mb-3 flex items-center">
+                                <span class="text-xl mr-2">ℹ️</span>
+                                Informasi Pemesanan
+                            </h4>
+                            <div class="grid md:grid-cols-2 gap-4 text-sm text-amber-700">
+                                <div class="space-y-2">
+                                    <div class="flex items-start">
+                                        <span class="text-amber-600 mr-2">•</span>
+                                        <span>Konfirmasi pesanan via WhatsApp dalam 1x24 jam</span>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <span class="text-amber-600 mr-2">•</span>
+                                        <span>Pembayaran: Transfer Bank / E-wallet</span>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex items-start">
+                                        <span class="text-amber-600 mr-2">•</span>
+                                        <span>Waktu produksi: 3-7 hari kerja</span>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <span class="text-amber-600 mr-2">•</span>
+                                        <span>Gratis ongkir untuk pembelian di atas Rp 1.000.000</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white py-4 rounded-lg font-semibold text-lg transition-colors shadow-lg hover:shadow-xl">
+                            <span class="flex items-center justify-center">
+                                <span class="mr-2">📦</span>
+                                Kirim Pesanan
+                            </span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
 
-    window.onload = () => {
-      setTimeout(() => {
-        document.querySelector('.loading').style.display = 'none';
-      }, timeout);
-    };
-  </script>
-</body>
+    <div id="contact" class="page pt-20">
+        <section class="py-16 bg-gray-50 relative overflow-hidden">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 mb-4 font-heading">Hubungi Kami</h2>
+                    <p class="text-gray-600">Kami siap membantu Anda dengan pertanyaan atau konsultasi produk</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-12">
+                    <div>
+                        <h3 class="text-2xl font-bold mb-6">Informasi Kontak</h3>
+                        <div class="space-y-6">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                                    <span class="text-xl">📍</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold mb-1">Alamat Toko</h4>
+                                    <p class="text-gray-600">Jl Rappocini Baru No 34<br>Makassar 954221</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                                    <span class="text-xl">📱</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold mb-1">WhatsApp</h4>
+                                    <p class="text-gray-600">+62 857-0932-9976</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                                    <span class="text-xl">📧</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold mb-1">Email</h4>
+                                    <p class="text-gray-600">LitCollection@gmail.com</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                                    <span class="text-xl">🕒</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold mb-1">Jam Operasional</h4>
+                                    <p class="text-gray-600">Senin - Sabtu: 09:00 - 21:00<br>Minggu: 10:00 - 18:00</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-8 p-6 bg-white rounded-lg shadow-lg">
+                            <h4 class="font-semibold mb-4">Ikuti Media Sosial Kami</h4>
+                            <div class="flex space-x-4">
+                                <a href="#" class="w-10 h-10 bg-amber-500 text-white rounded-lg flex items-center justify-center hover:bg-amber-600 transition-colors">
+                                    <span class="text-sm font-bold">IG</span>
+                                </a>
+                                <a href="#" class="w-10 h-10 bg-amber-500 text-white rounded-lg flex items-center justify-center hover:bg-amber-600 transition-colors">
+                                    <span class="text-sm font-bold">FB</span>
+                                </a>
+                                <a href="#" class="w-10 h-10 bg-amber-500 text-white rounded-lg flex items-center justify-center hover:bg-amber-600 transition-colors">
+                                    <span class="text-sm font-bold">TT</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-lg p-8">
+                        <h3 class="text-2xl font-bold mb-6">Kirim Pesan</h3>
+                        <form id="contactForm" class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nama Lengkap *</label>
+                                <input type="text" name="nama" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                                <input type="email" name="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nomor WhatsApp</label>
+                                <input type="tel" name="whatsapp" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Subjek *</label>
+                                <select name="subjek" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                                    <option value="">Pilih Subjek</option>
+                                    <option value="Pertanyaan Produk">Pertanyaan Produk</option>
+                                    <option value="Konsultasi Design">Konsultasi Design</option>
+                                    <option value="Keluhan">Keluhan</option>
+                                    <option value="Kerjasama">Kerjasama</option>
+                                    <option value="Lainnya">Lainnya</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Pesan *</label>
+                                <textarea name="pesan" required rows="5" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"></textarea>
+                            </div>
+                            <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-lg font-semibold transition-colors">Kirim Pesan</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-2xl font-bold mb-4 font-heading">LitCollection</h3>
+                    <p class="text-gray-300 mb-4">Toko aksesoris premium yang menghadirkan koleksi eksklusif untuk melengkapi gaya hidup modern Anda.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-300 hover:text-amber-400 transition-colors">Instagram</a>
+                        <a href="#" class="text-gray-300 hover:text-amber-400 transition-colors">Facebook</a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Produk</h4>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="#" onclick="showPage('products')" class="hover:text-amber-400 transition-colors">Gelang</a></li>
+                        <li><a href="#" onclick="showPage('products')" class="hover:text-amber-400 transition-colors">Cincin</a></li>
+                        <li><a href="#" onclick="showPage('products')" class="hover:text-amber-400 transition-colors">Kalung</a></li>
+                        <li><a href="#" onclick="showPage('products')" class="hover:text-amber-400 transition-colors">Set Wedding</a></li>
+                        <li><a href="#" onclick="showPage('products')" class="hover:text-amber-400 transition-colors">Custom Design</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Layanan</h4>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="#" onclick="showPage('order')" class="hover:text-amber-400 transition-colors">Pemesanan</a></li>
+                        <li><a href="#" onclick="showPage('contact')" class="hover:text-amber-400 transition-colors">Konsultasi Design</a></li>
+                        <li><a href="#" class="hover:text-amber-400 transition-colors">Perawatan Jewelry</a></li>
+                        <li><a href="#" class="hover:text-amber-400 transition-colors">Garansi</a></li>
+                        <li><a href="#" class="hover:text-amber-400 transition-colors">Retur & Tukar</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Kontak</h4>
+                    <ul class="space-y-2 text-gray-300">
+                        <li>📍 Jl Rappocini Baru No 34</li>
+                        <li>Makassar 954221</li>
+                        <li>📱 +62 857-0932-9976</li>
+                        <li>📧 LitCollection@gmail.com</li>
+                        <li>🕒 Senin-Sabtu: 09:00-21:00</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
+                <p>&copy; 2025 LitCollection. All rights reserved. | Designed with ❤️ for jewelry lovers</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function showPage(pageId) {
+            const pages = document.querySelectorAll('.page');
+            pages.forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => link.classList.remove('active'));
+            const activeLinks = document.querySelectorAll(`[onclick="showPage('${pageId}')"]`);
+            activeLinks.forEach(link => link.classList.add('active'));
+            document.getElementById('mobile-menu').classList.add('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        const ADMIN_WHATSAPP = '6285709329976';
+        const CONNECTION_ID = 'YOUR_CONNECTION_ID';
+        const API_URL = `https://versasoft.my.id/message/send/${CONNECTION_ID}`;
+        const API_TOKEN = 'YOUR_API_TOKEN';
+
+        function formatPhoneNumber(phone) {
+            let cleaned = (phone || '').toString().replace(/\D/g, '');
+            if (cleaned.startsWith('0')) cleaned = '62' + cleaned.substring(1);
+            else if (!cleaned.startsWith('62')) cleaned = '62' + cleaned;
+            return cleaned;
+        }
+
+        document.getElementById('orderForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            data.timestamp = new Date().toLocaleString('id-ID');
+            data.type = 'order';
+
+            try {
+                await fetch('https://script.google.com/macros/s/AKfycbz6K6fTgjmSdLIh-iLbxE3liyzOl5ZQRD3i_qCSidIiNOiSNO9scFdCBugIjBz_Ip89/exec', {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const waMessage = [
+                    '*PESANAN BARU LITCOLLECTION*',
+                    '',
+                    '*DATA PEMESAN:*',
+                    `Nama: ${data.nama}`,
+                    `No. HP: ${data.whatsapp}`,
+                    `Email: ${data.email || '-'}`,
+                    '',
+                    '*DETAIL PRODUK:*',
+                    `Kategori: ${data.kategori}`,
+                    `Produk: ${data.produk}`,
+                    `Jumlah: ${data.jumlah}`,
+                    `Ukuran: ${data.ukuran || '-'}`,
+                    '',
+                    '*PENGIRIMAN:*',
+                    `Alamat: ${data.alamat}`,
+                    `Catatan: ${data.catatan || '-'}`,
+                    '',
+                    `Waktu Pesan: ${data.timestamp}`
+                ].join('\n');
+
+                if (CONNECTION_ID !== 'YOUR_CONNECTION_ID' && API_TOKEN !== 'YOUR_API_TOKEN') {
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${API_TOKEN}`
+                        },
+                        body: JSON.stringify({ number: ADMIN_WHATSAPP, message: waMessage })
+                    });
+
+                    const customerPhone = formatPhoneNumber(data.whatsapp);
+                    const confirmationMessage = [
+                        `Halo ${data.nama}! 👋`,
+                        '',
+                        '*KONFIRMASI PESANAN LITCOLLECTION*',
+                        '',
+                        'Pesanan Anda telah kami terima ✅',
+                        '',
+                        '*Detail Pesanan:*',
+                        `Produk: ${data.produk}`,
+                        `Kategori: ${data.kategori}`,
+                        `Jumlah: ${data.jumlah}`,
+                        `Ukuran: ${data.ukuran || '-'}`,
+                        '',
+                        'Kami akan segera menghubungi Anda untuk konfirmasi dan proses selanjutnya.',
+                        '',
+                        'Terima kasih telah berbelanja di *LitCollection*! ✨'
+                    ].join('\n');
+
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${API_TOKEN}`
+                        },
+                        body: JSON.stringify({ number: customerPhone, message: confirmationMessage })
+                    });
+                }
+
+                alert('Terima kasih! Pesanan Anda telah dikirim. Kami akan menghubungi Anda segera via WhatsApp.');
+                this.reset();
+            } catch (err) {
+                alert('Pesanan berhasil dikirim! Kami akan segera menghubungi Anda.');
+                this.reset();
+            }
+        });
+
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            data.timestamp = new Date().toLocaleString('id-ID');
+            data.type = 'contact';
+
+            fetch('https://script.google.com/macros/s/AKfycbz6K6fTgjmSdLIh-iLbxE3liyzOl5ZQRD3i_qCSidIiNOiSNO9scFdCBugIjBz_Ip89/exec', {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).then(() => {
+                alert('Terima kasih! Pesan Anda telah terkirim. Kami akan merespons dalam 1x24 jam.');
+                this.reset();
+            }).catch(() => {
+                alert('Pesan berhasil dikirim! Kami akan segera merespons.');
+                this.reset();
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            showPage('home');
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'986cd1216728408f',t:'MTc1OTE2MjkyMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
